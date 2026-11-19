@@ -1,0 +1,322 @@
+{
+  "models": {
+    "elastic_net": {
+      "mae_years": 7.13,
+      "medae_years": 6.3,
+      "rmse_years": 8.84,
+      "r2_score": 0.884,
+      "pearson_r": 0.945,
+      "pearson_p": 1.675992704796727e-49,
+      "spearman_rho": 0.964,
+      "spearman_p": 5.812783847149583e-58
+    },
+    "deep_clock": {
+      "mae_years": 8.4,
+      "medae_years": 5.18,
+      "rmse_years": 11.26,
+      "r2_score": 0.811,
+      "pearson_r": 0.955,
+      "pearson_p": 1.6106964342399144e-53,
+      "spearman_rho": 0.952,
+      "spearman_p": 2.2923770516062326e-52
+    }
+  },
+  "age_acceleration": {
+    "mean_raw_delta": -0.31,
+    "std_raw_delta": 8.84,
+    "mean_adjusted_accel": -0.0,
+    "std_adjusted_accel": 7.14,
+    "accelerated_samples": 38,
+    "decelerated_samples": 39,
+    "normal_samples": 23,
+    "ols_slope": 0.799,
+    "ols_intercept": 9.64
+  },
+  "cpg_count_total": 265,
+  "cpg_count_selected": 35,
+  "top_cpg_biomarkers": [
+    {
+      "cpg_id": "cg19761276",
+      "weight": -1.907,
+      "abs_weight": 1.907,
+      "direction": "Hypomethylated (-)",
+      "gene": "TFAP2E",
+      "chromosome": "chr1",
+      "position": 28628045,
+      "regulatory_region": "TSS200",
+      "cpg_island_context": "N_Shore",
+      "pathway": "Transcriptional Regulation & Tumor Suppression",
+      "functional_annotation": "Transcription factor AP-2 epsilon; progressive loss of methylation with age."
+    },
+    {
+      "cpg_id": "cg02228185",
+      "weight": -1.8805,
+      "abs_weight": 1.8805,
+      "direction": "Hypomethylated (-)",
+      "gene": "ASPA",
+      "chromosome": "chr17",
+      "position": 3390821,
+      "regulatory_region": "Body",
+      "cpg_island_context": "OpenSea",
+      "pathway": "Myelin Maintenance & Acetate Metabolism",
+      "functional_annotation": "Aspartoacylase; hypomethylation correlates with loss of myelin integrity."
+    },
+    {
+      "cpg_id": "cg16867657",
+      "weight": 1.3359,
+      "abs_weight": 1.3359,
+      "direction": "Hypermethylated (+)",
+      "gene": "ELOVL2",
+      "chromosome": "chr6",
+      "position": 11044634,
+      "regulatory_region": "TSS200",
+      "cpg_island_context": "Island",
+      "pathway": "Fatty Acid Elongation & Lipid Homeostasis",
+      "functional_annotation": "Elongation of very long chain fatty acids-like 2. Premier pan-tissue aging marker."
+    },
+    {
+      "cpg_id": "cg22736354",
+      "weight": -1.2537,
+      "abs_weight": 1.2537,
+      "direction": "Hypomethylated (-)",
+      "gene": "NHLRC1",
+      "chromosome": "chr6",
+      "position": 18121900,
+      "regulatory_region": "Body",
+      "cpg_island_context": "OpenSea",
+      "pathway": "Ubiquitin-Proteasome System & Glycogen Metabolism",
+      "functional_annotation": "NHL repeat containing E3 ubiquitin protein ligase 1."
+    },
+    {
+      "cpg_id": "cg25547614",
+      "weight": -1.0488,
+      "abs_weight": 1.0488,
+      "direction": "Hypomethylated (-)",
+      "gene": "PITX2",
+      "chromosome": "chr4",
+      "position": 110620890,
+      "regulatory_region": "TSS1500",
+      "cpg_island_context": "Island",
+      "pathway": "Developmental Patterning & Left-Right Asymmetry",
+      "functional_annotation": "Paired like homeodomain 2; age-associated hypomethylation."
+    },
+    {
+      "cpg_id": "cg06639320",
+      "weight": 0.9482,
+      "abs_weight": 0.9482,
+      "direction": "Hypermethylated (+)",
+      "gene": "FHL2",
+      "chromosome": "chr2",
+      "position": 105399284,
+      "regulatory_region": "TSS1500",
+      "cpg_island_context": "Island",
+      "pathway": "Cardiac Remodeling & Cytoskeletal Organization",
+      "functional_annotation": "Four and a half LIM domains 2; promoter hypermethylation associated with cardiovascular aging."
+    },
+    {
+      "cpg_id": "cg08090772",
+      "weight": -0.9398,
+      "abs_weight": 0.9398,
+      "direction": "Hypomethylated (-)",
+      "gene": "CSNK1D",
+      "chromosome": "chr17",
+      "position": 80198421,
+      "regulatory_region": "TSS1500",
+      "cpg_island_context": "Island",
+      "pathway": "Circadian Rhythm & DNA Damage Checkpoints",
+      "functional_annotation": "Casein kinase 1 delta; clock gene exhibiting age-dependent hypomethylation."
+    },
+    {
+      "cpg_id": "cg24724428",
+      "weight": 0.9117,
+      "abs_weight": 0.9117,
+      "direction": "Hypermethylated (+)",
+      "gene": "ELOVL2",
+      "chromosome": "chr6",
+      "position": 11044670,
+      "regulatory_region": "5'UTR",
+      "cpg_island_context": "Island",
+      "pathway": "Fatty Acid Elongation & Lipid Homeostasis",
+      "functional_annotation": "Secondary ELOVL2 CpG marker; hypermethylation alters cell membrane composition."
+    },
+    {
+      "cpg_id": "cg16419235",
+      "weight": 0.8863,
+      "abs_weight": 0.8863,
+      "direction": "Hypermethylated (+)",
+      "gene": "PENK",
+      "chromosome": "chr8",
+      "position": 56434440,
+      "regulatory_region": "TSS200",
+      "cpg_island_context": "N_Shore",
+      "pathway": "Neuroendocrine & Opioid Signaling",
+      "functional_annotation": "Proenkephalin; hypermethylation linked to neuroendocrine decline."
+    },
+    {
+      "cpg_id": "cg07553198",
+      "weight": 0.7621,
+      "abs_weight": 0.7621,
+      "direction": "Hypermethylated (+)",
+      "gene": "TRIM59",
+      "chromosome": "chr3",
+      "position": 160450119,
+      "regulatory_region": "TSS1500",
+      "cpg_island_context": "Island",
+      "pathway": "Cellular Senescence & Innate Immunity",
+      "functional_annotation": "Tripartite motif containing 59; regulates cellular senescence checkpoints."
+    }
+  ],
+  "pathway_enrichment": [
+    {
+      "pathway": "Fatty Acid Elongation & Lipid Homeostasis",
+      "total_abs_weight": 2.248,
+      "mean_weight": 1.1238000000000001,
+      "cpg_count": 2,
+      "genes": "ELOVL2",
+      "relative_contribution_pct": 14.5
+    },
+    {
+      "pathway": "Transcriptional Regulation & Tumor Suppression",
+      "total_abs_weight": 1.907,
+      "mean_weight": -1.907,
+      "cpg_count": 1,
+      "genes": "TFAP2E",
+      "relative_contribution_pct": 12.3
+    },
+    {
+      "pathway": "Myelin Maintenance & Acetate Metabolism",
+      "total_abs_weight": 1.88,
+      "mean_weight": -1.8805,
+      "cpg_count": 1,
+      "genes": "ASPA",
+      "relative_contribution_pct": 12.1
+    },
+    {
+      "pathway": "Cardiac Remodeling & Cytoskeletal Organization",
+      "total_abs_weight": 1.585,
+      "mean_weight": 0.7924500000000001,
+      "cpg_count": 2,
+      "genes": "FHL2",
+      "relative_contribution_pct": 10.2
+    },
+    {
+      "pathway": "General Cellular Homeostasis",
+      "total_abs_weight": 1.408,
+      "mean_weight": 0.13138333333333332,
+      "cpg_count": 6,
+      "genes": "Intergenic / Uncharacterized",
+      "relative_contribution_pct": 9.1
+    },
+    {
+      "pathway": "Ubiquitin-Proteasome System & Glycogen Metabolism",
+      "total_abs_weight": 1.254,
+      "mean_weight": -1.2537,
+      "cpg_count": 1,
+      "genes": "NHLRC1",
+      "relative_contribution_pct": 8.1
+    },
+    {
+      "pathway": "Developmental Patterning & Left-Right Asymmetry",
+      "total_abs_weight": 1.049,
+      "mean_weight": -1.0488,
+      "cpg_count": 1,
+      "genes": "PITX2",
+      "relative_contribution_pct": 6.7
+    },
+    {
+      "pathway": "Circadian Rhythm & DNA Damage Checkpoints",
+      "total_abs_weight": 0.94,
+      "mean_weight": -0.9398,
+      "cpg_count": 1,
+      "genes": "CSNK1D",
+      "relative_contribution_pct": 6.0
+    },
+    {
+      "pathway": "Neuroendocrine & Opioid Signaling",
+      "total_abs_weight": 0.886,
+      "mean_weight": 0.8863,
+      "cpg_count": 1,
+      "genes": "PENK",
+      "relative_contribution_pct": 5.7
+    },
+    {
+      "pathway": "Cellular Senescence & Innate Immunity",
+      "total_abs_weight": 0.762,
+      "mean_weight": 0.7621,
+      "cpg_count": 1,
+      "genes": "TRIM59",
+      "relative_contribution_pct": 4.9
+    },
+    {
+      "pathway": "Adipose Tissue Homeostasis & Metabolic Regulation",
+      "total_abs_weight": 0.563,
+      "mean_weight": 0.5634,
+      "cpg_count": 1,
+      "genes": "KLF14",
+      "relative_contribution_pct": 3.6
+    },
+    {
+      "pathway": "Synaptic Plasticity & Neurotransmission",
+      "total_abs_weight": 0.56,
+      "mean_weight": 0.5602,
+      "cpg_count": 1,
+      "genes": "GRIA2",
+      "relative_contribution_pct": 3.6
+    },
+    {
+      "pathway": "Developmental Homeostasis & Chromatin Organization",
+      "total_abs_weight": 0.498,
+      "mean_weight": 0.4979,
+      "cpg_count": 1,
+      "genes": "OTX2",
+      "relative_contribution_pct": 3.2
+    }
+  ],
+  "reprogramming_reversal": [
+    {
+      "reprogramming_day": 0,
+      "sample_count": 5,
+      "mean_bio_age": 52.1,
+      "std_bio_age": 4.41,
+      "reversal_years": 0.0,
+      "rejuvenation_pct": 0.0,
+      "stage_label": "Somatic Baseline"
+    },
+    {
+      "reprogramming_day": 3,
+      "sample_count": 5,
+      "mean_bio_age": 51.0,
+      "std_bio_age": 2.33,
+      "reversal_years": 1.1,
+      "rejuvenation_pct": 2.0,
+      "stage_label": "Partial Reprogramming (Identity Preserved)"
+    },
+    {
+      "reprogramming_day": 7,
+      "sample_count": 5,
+      "mean_bio_age": 40.1,
+      "std_bio_age": 0.92,
+      "reversal_years": 12.0,
+      "rejuvenation_pct": 23.0,
+      "stage_label": "Partial Reprogramming (Identity Preserved)"
+    },
+    {
+      "reprogramming_day": 12,
+      "sample_count": 5,
+      "mean_bio_age": 11.4,
+      "std_bio_age": 0.84,
+      "reversal_years": 40.6,
+      "rejuvenation_pct": 78.0,
+      "stage_label": "Intermediate Transition"
+    },
+    {
+      "reprogramming_day": 21,
+      "sample_count": 5,
+      "mean_bio_age": 0.8,
+      "std_bio_age": 0.36,
+      "reversal_years": 51.3,
+      "rejuvenation_pct": 98.4,
+      "stage_label": "Fully Reprogrammed iPSC (Embryonic Reset)"
+    }
+  ]
+}
