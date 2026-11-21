@@ -1,235 +1,204 @@
-"""End-to-End Epigenetic Aging Clock Pipeline Orchestrator.
+"""Train a methylation clock on one cohort and test it on another.
 
-Trains regularized elastic-net and deep neural clocks, evaluates age acceleration,
-performs genomic/pathway feature attribution, and benchmarks cellular reprogramming.
+The question is not whether a clock can fit its own cohort, which it always can, but whether it
+still reads age correctly on blood samples processed by a different lab. The second cohort is also
+younger and narrower in age, so the age-range confound is measured rather than ignored.
 """
-
 import json
 import os
-from typing import Dict, Optional, Tuple
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold, cross_val_predict
 
-from .data import MethylationCohortGenerator
-from .interpretability import annotate_cpg_weights, compute_pathway_enrichment
-from .metrics import compute_age_acceleration, evaluate_clock
-from .models import DeepEpigeneticClock, ElasticNetClock
-from .rejuvenation import evaluate_reprogramming_trajectory
+from .data import load_cohort, probe_ids, scan_probe_stats
+from .metrics import age_acceleration, baseline_mae, bootstrap_difference, bootstrap_mae, scores
+from .models import clock, n_selected, selected_probes
+
+TRAIN = "data/raw/GSE40279_series_matrix.txt.gz"
+TEST = "data/raw/GSE41169_series_matrix.txt.gz"
+N_PROBES = 20000
 
 
-class EpigeneticClockPipeline:
-    """Full campaign orchestrator for epigenetic clock modeling and longevity benchmarks."""
+def common_probes(train_path, test_path):
+    a, b = probe_ids(train_path), set(probe_ids(test_path))
+    return [p for p in a if p in b]
 
-    def __init__(self, seed: int = 42):
-        self.seed = seed
-        self.generator = MethylationCohortGenerator(seed=seed)
 
-    def run_campaign(
-        self,
-        n_samples: int = 500,
-        n_background_cpgs: int = 250,
-        test_size: float = 0.20,
-        output_dir: str = "results",
-    ) -> Dict:
-        """Execute end-to-end training, cross-validation, and rejuvenation benchmarks."""
-        os.makedirs(output_dir, exist_ok=True)
-        print("=" * 70)
-        print("  EPIGENETIC AGING CLOCK & CELLULAR REJUVENATION PIPELINE")
-        print("=" * 70)
+def pick_probes(stats, n=None):
+    """Most variable complete probes in the training cohort.
 
-        # 1. Generate Multi-Tissue Cohort
-        print(f"Generating synthetic multi-tissue cohort ({n_samples} donors, {n_background_cpgs + 15} CpGs)...")
-        cohort = self.generator.generate_cohort(n_samples=n_samples, n_background_cpgs=n_background_cpgs)
+    Selection uses no age labels, so it cannot leak the target into the cross-validation."""
+    ok = stats[(stats["missing"] == 0) & stats["variance"].notna()]
+    return list(ok["variance"].sort_values(ascending=False).head(n or N_PROBES).index)
 
-        X = cohort.beta_values
-        y = cohort.chronological_age
-        cpg_ids = cohort.cpg_ids
-        tissues = np.array(cohort.tissue)
 
-        # 2. Train / Test Split
-        X_train, X_test, y_train, y_test, t_train, t_test = train_test_split(
-            X, y, tissues, test_size=test_size, random_state=self.seed
-        )
-        print(f"Train set: {len(y_train)} donors | Held-out test set: {len(y_test)} donors")
+def load_or_cache(train_path, test_path, cache="data/prepared.npz"):
+    """Reading the gzipped tables takes minutes, so the prepared matrices are cached."""
+    if os.path.exists(cache):
+        z = np.load(cache, allow_pickle=True)
+        print(f"using cached matrices from {cache}", flush=True)
+        return (pd.DataFrame(z["Xtr"], index=z["tr_idx"], columns=z["probes"]),
+                pd.Series(z["age_tr"], index=z["tr_idx"]),
+                pd.DataFrame(z["Xte"], index=z["te_idx"], columns=z["probes"]),
+                pd.Series(z["age_te"], index=z["te_idx"]),
+                pd.DataFrame(z["meta_te"], index=z["te_idx"], columns=z["meta_cols"]),
+                int(z["n_shared"]), int(z["n_excluded"]), int(z["n_absent"]))
 
-        # 3. Train Canonical Elastic Net Clock
-        print("\nTraining Canonical ElasticNet Epigenetic Clock (5-fold CV)...")
-        enet_clock = ElasticNetClock(random_state=self.seed)
-        enet_clock.fit(X_train, y_train, cpg_ids=cpg_ids)
-        enet_preds = enet_clock.predict(X_test)
-        enet_metrics = evaluate_clock(y_test, enet_preds)
-        print(f"  ElasticNet Test MAE: {enet_metrics['mae_years']} yrs | Pearson r: {enet_metrics['pearson_r']} (R²: {enet_metrics['r2_score']})")
+    shared = common_probes(train_path, test_path)
+    print(f"probes shared by both cohorts: {len(shared)}", flush=True)
+    stats = scan_probe_stats(train_path, keep=shared)
+    probes = pick_probes(stats)
+    print(f"probes complete in training cohort: {int((stats['missing'] == 0).sum())}; "
+          f"keeping the {len(probes)} most variable", flush=True)
 
-        # 4. Train Deep Epigenetic Clock (PyTorch)
-        print("\nTraining DeepEpigeneticClock (Sparse Regularized MLP)...")
-        deep_clock = DeepEpigeneticClock(epochs=150, seed=self.seed)
-        deep_clock.fit(X_train, y_train, cpg_ids=cpg_ids)
-        deep_preds = deep_clock.predict(X_test)
-        deep_metrics = evaluate_clock(y_test, deep_preds)
-        print(f"  Deep Clock Test MAE: {deep_metrics['mae_years']} yrs | Pearson r: {deep_metrics['pearson_r']} (R²: {deep_metrics['r2_score']})")
+    Xtr, age_tr, _ = load_cohort(train_path, keep=probes)
+    Xtr = Xtr[probes]
+    Xte, age_te, meta_te = load_cohort(test_path, keep=probes)
+    excluded = _author_exclusions(meta_te)
+    if excluded.any():
+        print(f"test: dropping {int(excluded.sum())} samples the original authors marked "
+              f"'used_in_analysis: no'", flush=True)
+        Xte, age_te, meta_te = Xte.loc[~excluded], age_te.loc[~excluded], meta_te.loc[~excluded]
+    Xte = Xte.reindex(columns=probes)
+    absent = int(Xte.isna().all(axis=0).sum())
+    Xte = Xte.fillna(Xtr.mean())
 
-        # 5. Age Acceleration Analysis (on ElasticNet)
-        raw_delta, adj_accel, accel_summary = compute_age_acceleration(y_test, enet_preds)
-        print(f"\nAge Acceleration Residuals:")
-        print(f"  Mean Raw ΔAge: {accel_summary['mean_raw_delta']} ± {accel_summary['std_raw_delta']} yrs")
-        print(f"  Accelerated Donors (> +3 yrs): {accel_summary['accelerated_samples']} / {len(y_test)}")
-        print(f"  Decelerated Donors (< -3 yrs): {accel_summary['decelerated_samples']} / {len(y_test)}")
+    os.makedirs(os.path.dirname(cache), exist_ok=True)
+    np.savez_compressed(cache, Xtr=Xtr.values, age_tr=age_tr.values, tr_idx=Xtr.index.to_numpy(),
+                        Xte=Xte.values, age_te=age_te.values, te_idx=Xte.index.to_numpy(),
+                        meta_te=meta_te.astype(str).values, meta_cols=meta_te.columns.to_numpy(),
+                        probes=np.array(probes), n_shared=len(shared),
+                        n_excluded=int(excluded.sum()), n_absent=absent)
+    return Xtr, age_tr, Xte, age_te, meta_te, len(shared), int(excluded.sum()), absent
 
-        # 6. Genomic Interpretability & Pathway Enrichment
-        selected_cpgs = enet_clock.get_selected_cpgs()
-        print(f"\nFeature Selection: Clock isolated {len(selected_cpgs)} predictive CpGs out of {len(cpg_ids)} total.")
-        annotated_df = annotate_cpg_weights(selected_cpgs, top_n=20)
-        pathway_df = compute_pathway_enrichment(annotated_df)
 
-        print("\nTop 5 Predictive CpG Biomarkers:")
-        for idx, row in annotated_df.head(5).iterrows():
-            print(f"  • {row['cpg_id']} ({row['gene']}): weight = {row['weight']:+.4f} | {row['pathway']}")
+def run(out_dir="results", train_path=TRAIN, test_path=TEST, seed=0, folds=5):
+    os.makedirs(out_dir, exist_ok=True)
+    report = {}
 
-        # 7. Cellular Reprogramming Benchmark (OSKM Timecourse)
-        print("\nBenchmarking Yamanaka Factor (OSKM) Cellular Rejuvenation Timecourse...")
-        reprogramming_cohort = self.generator.generate_reprogramming_timecourse(
-            donor_age=62.0, cpg_ids=cpg_ids, timepoints=[0, 3, 7, 12, 21], replicates=5
-        )
-        rejuvenation_summary = evaluate_reprogramming_trajectory(enet_clock, reprogramming_cohort)
+    Xtr, age_tr, Xte, age_te, meta_te, n_shared, n_excluded, missing = load_or_cache(
+        train_path, test_path)
+    probes = list(Xtr.columns)
+    report["author_exclusions_in_test"] = n_excluded
+    report["probes_shared"] = n_shared
+    print(f"train: {Xtr.shape[0]} samples, {Xtr.shape[1]} probes, "
+          f"age {age_tr.min():.0f} to {age_tr.max():.0f}", flush=True)
+    print(f"test:  {Xte.shape[0]} samples, age {age_te.min():.0f} to {age_te.max():.0f}, "
+          f"{missing} probes absent and filled with the training mean", flush=True)
 
-        for _, row in rejuvenation_summary.iterrows():
-            day = row["reprogramming_day"]
-            bio_age = row["mean_bio_age"]
-            rev = row["reversal_years"]
-            pct = row["rejuvenation_pct"]
-            stage = row["stage_label"]
-            print(f"  Day {day:02d}: Bio Age = {bio_age:.1f} yrs (Reversed {rev:.1f} yrs / {pct:.1f}%) -> {stage}")
+    report["cohorts"] = {
+        "train": {"accession": os.path.basename(train_path).split("_")[0], "n": int(len(age_tr)),
+                  "age_min": float(age_tr.min()), "age_max": float(age_tr.max()),
+                  "age_mean": float(age_tr.mean())},
+        "test": {"accession": os.path.basename(test_path).split("_")[0], "n": int(len(age_te)),
+                 "age_min": float(age_te.min()), "age_max": float(age_te.max()),
+                 "age_mean": float(age_te.mean())},
+        "probes_used": int(Xtr.shape[1]), "probes_absent_in_test": missing}
 
-        # 8. Generate Visualizations
-        self._plot_clock_accuracy(y_test, enet_preds, enet_metrics, t_test, os.path.join(output_dir, "clock_accuracy.png"))
-        self._plot_interpretability(annotated_df, pathway_df, os.path.join(output_dir, "cpg_pathway_importance.png"))
-        self._plot_reprogramming(rejuvenation_summary, os.path.join(output_dir, "rejuvenation_trajectory.png"))
+    # 1. within-cohort, cross-validated
+    cv = KFold(n_splits=folds, shuffle=True, random_state=seed)
+    pred_cv = cross_val_predict(clock(seed=seed), Xtr.values, age_tr.values, cv=cv, n_jobs=1)
+    m, lo, hi = bootstrap_mae(age_tr.values, pred_cv)
+    report["within_cohort_cv"] = {**scores(age_tr.values, pred_cv), "mae_ci": [lo, hi],
+                                  "baseline_mae_predict_mean": baseline_mae(age_tr.values, age_tr.values)}
+    print(f"\nwithin-cohort {folds}-fold CV: MAE {m:.2f} [{lo:.2f}, {hi:.2f}] years, "
+          f"r={report['within_cohort_cv']['pearson_r']:.3f}", flush=True)
 
-        # 9. Export Summary JSON
-        summary_payload = {
-            "models": {
-                "elastic_net": enet_metrics,
-                "deep_clock": deep_metrics,
-            },
-            "age_acceleration": accel_summary,
-            "cpg_count_total": len(cpg_ids),
-            "cpg_count_selected": len(selected_cpgs),
-            "top_cpg_biomarkers": annotated_df.head(10).to_dict(orient="records"),
-            "pathway_enrichment": pathway_df.to_dict(orient="records"),
-            "reprogramming_reversal": rejuvenation_summary.to_dict(orient="records"),
-        }
+    # 2. the clock itself, fitted on all of the training cohort
+    model = clock(seed=seed).fit(Xtr.values, age_tr.values)
+    report["model"] = {"probes_selected": n_selected(model), "alpha": float(model[-1].alpha_),
+                       "l1_ratio": float(model[-1].l1_ratio)}
+    pd.DataFrame(selected_probes(model, probes)[:25], columns=["probe", "coefficient"]).to_csv(
+        f"{out_dir}/top_probes.csv", index=False)
+    print(f"probes with non-zero weight: {report['model']['probes_selected']}", flush=True)
 
-        summary_path = os.path.join(output_dir, "clock_summary.json")
-        with open(summary_path, "w") as f:
-            json.dump(summary_payload, f, indent=2)
+    # 3. independent cohort
+    pred_te = model.predict(Xte.values)
+    m2, lo2, hi2 = bootstrap_mae(age_te.values, pred_te)
+    report["independent_cohort"] = {**scores(age_te.values, pred_te), "mae_ci": [lo2, hi2],
+                                    "baseline_mae_predict_train_mean": baseline_mae(age_tr.values, age_te.values)}
+    print(f"independent cohort:         MAE {m2:.2f} [{lo2:.2f}, {hi2:.2f}] years, "
+          f"r={report['independent_cohort']['pearson_r']:.3f}, "
+          f"bias {report['independent_cohort']['bias']:+.2f}", flush=True)
+    print(f"  (predicting the training mean age for everyone would give MAE "
+          f"{report['independent_cohort']['baseline_mae_predict_train_mean']:.2f})", flush=True)
 
-        print("\n" + "=" * 70)
-        print(f"Campaign Complete! Results and plots exported to '{output_dir}/'")
-        print("=" * 70)
-        return summary_payload
+    # 4. age-range confound: score the training cohort only where the two ranges overlap
+    lo_a, hi_a = float(age_te.min()), float(age_te.max())
+    inside = ((age_tr >= lo_a) & (age_tr <= hi_a)).values
+    m3, lo3, hi3 = bootstrap_mae(age_tr.values[inside], pred_cv[inside])
+    report["age_range_check"] = {"overlap_range": [lo_a, hi_a], "n_train_in_range": int(inside.sum()),
+                                 "within_cohort_mae_in_range": m3, "mae_ci": [lo3, hi3]}
+    print(f"\nage-range check: within-cohort CV restricted to {lo_a:.0f}-{hi_a:.0f} years "
+          f"(n={int(inside.sum())}): MAE {m3:.2f} [{lo3:.2f}, {hi3:.2f}]", flush=True)
 
-    def _plot_clock_accuracy(self, y_true, y_pred, metrics, tissues, output_path):
-        """Scatter plot of chronological age vs. epigenetic predicted age."""
-        fig, ax = plt.subplots(figsize=(7, 6), dpi=300)
+    # 4b. the same age bands in both cohorts. If a clock trained mostly on older people already
+    # over-reads its own young samples, a young test cohort will look like a transfer failure.
+    bands = {"under 40": lambda a: a < 40, "40 and over": lambda a: a >= 40}
+    report["age_bands"] = {}
+    print("\nage bands, same clock, both cohorts:", flush=True)
+    print(f"  {'band':12s} {'cohort':14s} {'n':>4s} {'MAE':>6s} {'95% CI':>16s} {'bias':>7s}", flush=True)
+    for label, fn in bands.items():
+        row = {}
+        for name, age_v, pred_v in (("training CV", age_tr.values, pred_cv),
+                                    ("independent", age_te.values, pred_te)):
+            sel = fn(age_v)
+            if sel.sum() < 5:
+                continue
+            mm, ll, hh = bootstrap_mae(age_v[sel], pred_v[sel])
+            bias = float(np.mean(pred_v[sel] - age_v[sel]))
+            row[name] = {"n": int(sel.sum()), "mae": mm, "mae_ci": [ll, hh], "bias": bias}
+            print(f"  {label:12s} {name:14s} {int(sel.sum()):4d} {mm:6.2f} "
+                  f"  [{ll:5.2f}, {hh:5.2f}] {bias:+7.2f}", flush=True)
+        report["age_bands"][label] = row
 
-        unique_tissues = np.unique(tissues)
-        colors = plt.cm.tab10(np.linspace(0, 1, len(unique_tissues)))
+    # 5. group differences in the independent cohort, if its metadata names groups
+    groups = _groups(meta_te)
+    if groups is not None:
+        accel = age_acceleration(age_te.values, pred_te)
+        rows = [{"group": g, "n": int((groups == g).sum()),
+                 "mean_age_acceleration_years": float(accel[(groups == g).values].mean())}
+                for g in sorted(groups.dropna().unique())]
+        report["groups_in_independent_cohort"] = rows
+        print("\nage acceleration by group (independent cohort):", flush=True)
+        for r in rows:
+            print(f"  {r['group']:60s} n={r['n']:3d}  {r['mean_age_acceleration_years']:+.2f} y",
+                  flush=True)
+        if len(rows) == 2:
+            a = accel[(groups == rows[0]["group"]).values]
+            b = accel[(groups == rows[1]["group"]).values]
+            d, lo_d, hi_d = bootstrap_difference(a, b)
+            report["group_difference"] = {"groups": [rows[0]["group"], rows[1]["group"]],
+                                          "difference_years": d, "ci": [lo_d, hi_d]}
+            print(f"  difference: {d:+.2f} years [{lo_d:+.2f}, {hi_d:+.2f}]", flush=True)
 
-        for tissue, color in zip(unique_tissues, colors):
-            mask = tissues == tissue
-            ax.scatter(y_true[mask], y_pred[mask], label=tissue.replace("_", " "), alpha=0.75, s=35, c=[color])
+    pd.DataFrame({"age": age_te.values, "predicted": pred_te}).to_csv(
+        f"{out_dir}/independent_cohort_predictions.csv", index=False)
+    pd.DataFrame({"age": age_tr.values, "predicted": pred_cv}).to_csv(
+        f"{out_dir}/within_cohort_cv_predictions.csv", index=False)
+    with open(f"{out_dir}/report.json", "w") as fh:
+        json.dump(report, fh, indent=2)
+    return report
 
-        # Identity line (y = x)
-        min_val = 0.0
-        max_val = max(np.max(y_true), np.max(y_pred)) + 5.0
-        ax.plot([min_val, max_val], [min_val, max_val], "k--", lw=1.5, alpha=0.7, label="Perfect Agreement (y = x)")
 
-        # OLS regression fit line
-        poly = np.polyfit(y_true, y_pred, 1)
-        ax.plot([min_val, max_val], np.polyval(poly, [min_val, max_val]), "r-", lw=1.5, label=f"Fit (Slope: {poly[0]:.2f})")
+def _author_exclusions(meta):
+    """Samples the depositors marked as not used in their own analysis."""
+    flag = np.zeros(len(meta), dtype=bool)
+    for col in meta.columns:
+        if col == "age":
+            continue
+        vals = meta[col].astype(str).str.lower().str.replace(" ", "")
+        flag |= vals.str.contains("used_in_analysis:no").values
+    return pd.Series(flag, index=meta.index)
 
-        ax.set_title("Multi-Tissue Epigenetic Aging Clock Validation", fontsize=13, fontweight="bold")
-        ax.set_xlabel("Chronological Age (Years)", fontsize=11)
-        ax.set_ylabel("Predicted Epigenetic Age (Years)", fontsize=11)
 
-        stats_text = (
-            f"MAE: {metrics['mae_years']} yrs\n"
-            f"Pearson r: {metrics['pearson_r']}\n"
-            f"R² Score: {metrics['r2_score']}"
-        )
-        ax.text(
-            0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
-            verticalalignment="top", bbox=dict(boxstyle="round,pad=0.5", fc="white", ec="gray", alpha=0.85)
-        )
-
-        ax.set_xlim(0, max_val)
-        ax.set_ylim(0, max_val)
-        ax.legend(loc="lower right", fontsize=8, framealpha=0.9)
-        ax.grid(True, linestyle=":", alpha=0.6)
-        plt.tight_layout()
-        plt.savefig(output_path)
-        plt.close(fig)
-
-    def _plot_interpretability(self, annotated_df, pathway_df, output_path):
-        """Top predictive CpG loci and functional pathway breakdown."""
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), dpi=300)
-
-        # Plot A: Top 10 CpGs by absolute weight
-        top_cpgs = annotated_df.head(10).copy()
-        colors = ["#d95f02" if w > 0 else "#7570b3" for w in top_cpgs["weight"]]
-        labels = [f"{row['gene']} ({row['cpg_id'][:8]})" for _, row in top_cpgs.iterrows()]
-
-        ax1.barh(labels[::-1], top_cpgs["weight"][::-1], color=colors[::-1])
-        ax1.axvline(0, color="black", lw=0.8, linestyle="--")
-        ax1.set_title("Top Epigenetic Clock CpG Biomarkers", fontsize=12, fontweight="bold")
-        ax1.set_xlabel("Elastic Net Coefficient (Weight)", fontsize=10)
-        ax1.grid(True, linestyle=":", alpha=0.5, axis="x")
-
-        # Plot B: Pathway enrichment percentage
-        top_pathways = pathway_df.head(6)
-        ax2.barh(
-            top_pathways["pathway"][::-1],
-            top_pathways["relative_contribution_pct"][::-1],
-            color="#1b9e77", alpha=0.85
-        )
-        ax2.set_title("Biological Pathway Enrichment (% Model Weight)", fontsize=12, fontweight="bold")
-        ax2.set_xlabel("Relative Contribution (%)", fontsize=10)
-        ax2.grid(True, linestyle=":", alpha=0.5, axis="x")
-
-        plt.tight_layout()
-        plt.savefig(output_path)
-        plt.close(fig)
-
-    def _plot_reprogramming(self, rejuvenation_df, output_path):
-        """Yamanaka factor (OSKM) partial reprogramming rejuvenation curve."""
-        fig, ax = plt.subplots(figsize=(8, 5), dpi=300)
-
-        days = rejuvenation_df["reprogramming_day"]
-        bio_ages = rejuvenation_df["mean_bio_age"]
-        stds = rejuvenation_df["std_bio_age"]
-
-        ax.errorbar(days, bio_ages, yerr=stds, fmt="-o", color="#2b5c8f", lw=2.2, capsize=5, markersize=7, label="Epigenetic Age Trajectory")
-
-        # Reference somatic baseline
-        ax.axhline(62.0, color="#d95f02", linestyle="--", lw=1.2, label="Donor Baseline (Age 62)")
-        # Embryonic iPSC line
-        ax.axhline(0.0, color="#1b9e77", linestyle=":", lw=1.2, label="Embryonic State (Age 0)")
-
-        # Shaded partial reprogramming safe zone (Days 3-7)
-        ax.axvspan(3, 7, color="#e6ab02", alpha=0.18, label="Partial Reprogramming Window\n(Age Reversed, Identity Kept)")
-
-        ax.set_title("Cellular Rejuvenation Kinetics via OSKM Induction", fontsize=13, fontweight="bold")
-        ax.set_xlabel("Reprogramming Exposure (Days)", fontsize=11)
-        ax.set_ylabel("Predicted Biological Age (Years)", fontsize=11)
-        ax.set_xticks(days)
-        ax.set_ylim(-5, 70)
-        ax.grid(True, linestyle=":", alpha=0.6)
-        ax.legend(loc="upper right", fontsize=9, framealpha=0.9)
-
-        plt.tight_layout()
-        plt.savefig(output_path)
-        plt.close(fig)
+def _groups(meta):
+    """A characteristics column that looks like a case/control label."""
+    for col in meta.columns:
+        if col == "age":
+            continue
+        vals = meta[col].astype(str)
+        if vals.str.contains("diagnosis|disease|status|group", case=False).any() and 1 < vals.nunique() <= 6:
+            return vals
+    return None

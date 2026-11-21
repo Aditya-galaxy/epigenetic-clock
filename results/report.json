@@ -1,0 +1,128 @@
+{
+  "author_exclusions_in_test": 6,
+  "probes_shared": 473034,
+  "cohorts": {
+    "train": {
+      "accession": "GSE40279",
+      "n": 656,
+      "age_min": 19.0,
+      "age_max": 101.0,
+      "age_mean": 64.03506097560975
+    },
+    "test": {
+      "accession": "GSE41169",
+      "n": 89,
+      "age_min": 18.0,
+      "age_max": 65.0,
+      "age_mean": 31.337078651685392
+    },
+    "probes_used": 20000,
+    "probes_absent_in_test": 0
+  },
+  "within_cohort_cv": {
+    "n": 656,
+    "mae": 5.21366251968756,
+    "median_ae": 4.40992546081543,
+    "pearson_r": 0.8920519062406518,
+    "bias": -0.022810540548185022,
+    "mae_ci": [
+      4.903090953100019,
+      5.54167725545604
+    ],
+    "baseline_mae_predict_mean": 11.90984718917311
+  },
+  "model": {
+    "probes_selected": 454,
+    "alpha": 0.7387846188267899,
+    "l1_ratio": 0.5
+  },
+  "independent_cohort": {
+    "n": 89,
+    "mae": 6.367221275072419,
+    "median_ae": 6.3798828125,
+    "pearson_r": 0.919981487855849,
+    "bias": 5.953408402003599,
+    "mae_ci": [
+      5.690897593337499,
+      7.061354893245053
+    ],
+    "baseline_mae_predict_train_mean": 32.74135036996437
+  },
+  "age_range_check": {
+    "overlap_range": [
+      18.0,
+      65.0
+    ],
+    "n_train_in_range": 343,
+    "within_cohort_mae_in_range": 4.959533257665162,
+    "mae_ci": [
+      4.523845962880304,
+      5.420764190184479
+    ]
+  },
+  "age_bands": {
+    "under 40": {
+      "training CV": {
+        "n": 35,
+        "mae": 6.671168954031808,
+        "mae_ci": [
+          5.512794688088553,
+          7.860823151724679
+        ],
+        "bias": 6.671168954031808
+      },
+      "independent": {
+        "n": 75,
+        "mae": 6.778002777099609,
+        "mae_ci": [
+          6.037517674763997,
+          7.568079953511556
+        ],
+        "bias": 6.46192632039388
+      }
+    },
+    "40 and over": {
+      "training CV": {
+        "n": 621,
+        "mae": 5.131516424354148,
+        "mae_ci": [
+          4.80468015378992,
+          5.460385982924997
+        ],
+        "bias": -0.40008796777894146
+      },
+      "independent": {
+        "n": 14,
+        "mae": 4.166606085641043,
+        "mae_ci": [
+          2.7628294467926025,
+          5.797447572435651
+        ],
+        "bias": 3.2292052677699496
+      }
+    }
+  },
+  "groups_in_independent_cohort": [
+    {
+      "group": "diseasestatus (1=control, 2=scz patient): 1",
+      "n": 33,
+      "mean_age_acceleration_years": 0.7560347878056953
+    },
+    {
+      "group": "diseasestatus (1=control, 2=scz patient): 2",
+      "n": 56,
+      "mean_age_acceleration_years": -0.4455204999569616
+    }
+  ],
+  "group_difference": {
+    "groups": [
+      "diseasestatus (1=control, 2=scz patient): 1",
+      "diseasestatus (1=control, 2=scz patient): 2"
+    ],
+    "difference_years": 1.201555287762657,
+    "ci": [
+      -0.37411201110296394,
+      2.7564273224652376
+    ]
+  }
+}
