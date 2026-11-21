@@ -48,6 +48,15 @@ Public Illumina 450K methylation arrays from GEO, both whole blood:
 
 473,034 probes are present in both. The clock uses the 20,000 most variable in the training cohort, chosen without reference to age so the selection cannot leak the target. **No probe was missing from the test cohort**, so nothing had to be filled in and any transfer failure is a genuine one rather than absent measurements.
 
+**What this repository used to contain.** Until this rewrite there was no real data here at all. A
+`MethylationCohortGenerator` invented beta values for 500 fictional donors across five tissues, and
+the README reported its output as findings: a multi-tissue clock at MAE 7.13 years and r = 0.945, 35
+loci mapped to named genes and pathways, and a Yamanaka (OSKM) reprogramming benchmark showing a
+12-year age reversal and 98.4% rejuvenation in iPSCs. None of it was measured. The simulator, the
+reprogramming module, the interpretability module and all four figures are deleted, and every number
+above comes from the two GEO cohorts named in the table. The earlier version is still in the commit
+history, at `252d6f3`.
+
 ## Method
 
 - Elastic net (l1_ratio 0.5) with the penalty chosen by inner cross-validation; 454 probes receive non-zero weight.
