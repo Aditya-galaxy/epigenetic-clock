@@ -21,8 +21,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, "/tmp")
-import torch_stub  # noqa: F401,E402  (biolearn imports torch for a model we do not use)
+
+from src import torch_stub  # noqa: F401,E402  (must precede biolearn; see that module)
 
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
