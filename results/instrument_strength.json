@@ -1,0 +1,78 @@
+{
+  "Horvathv1": {
+    "n_cpgs": 353,
+    "with_mqtl": 204,
+    "with_mqtl_pct": 57.79036827195468,
+    "strong_instrument": 204,
+    "strong_instrument_pct": 57.79036827195468,
+    "median_independent": 1.0,
+    "median_best_f": 284.87156414855565,
+    "selected_by_mr": false,
+    "unassessable": 149,
+    "unassessable_pct": 42.20963172804532
+  },
+  "Hannum": {
+    "n_cpgs": 71,
+    "with_mqtl": 51,
+    "with_mqtl_pct": 71.83098591549296,
+    "strong_instrument": 51,
+    "strong_instrument_pct": 71.83098591549296,
+    "median_independent": 1.0,
+    "median_best_f": 306.0150500863624,
+    "selected_by_mr": false,
+    "unassessable": 20,
+    "unassessable_pct": 28.169014084507037
+  },
+  "PhenoAge": {
+    "n_cpgs": 513,
+    "with_mqtl": 283,
+    "with_mqtl_pct": 55.165692007797276,
+    "strong_instrument": 283,
+    "strong_instrument_pct": 55.165692007797276,
+    "median_independent": 1.0,
+    "median_best_f": 357.26940358032283,
+    "selected_by_mr": false,
+    "unassessable": 230,
+    "unassessable_pct": 44.834307992202724
+  },
+  "YingCausAge": {
+    "n_cpgs": 585,
+    "with_mqtl": 585,
+    "with_mqtl_pct": 100.0,
+    "strong_instrument": 585,
+    "strong_instrument_pct": 100.0,
+    "median_independent": 2.0,
+    "median_best_f": 693.6745446277802,
+    "selected_by_mr": true,
+    "unassessable": 0,
+    "unassessable_pct": 0.0
+  },
+  "YingDamAge": {
+    "n_cpgs": 1089,
+    "with_mqtl": 1089,
+    "with_mqtl_pct": 100.0,
+    "strong_instrument": 1089,
+    "strong_instrument_pct": 100.0,
+    "median_independent": 2.0,
+    "median_best_f": 822.9563399421211,
+    "selected_by_mr": true,
+    "unassessable": 0,
+    "unassessable_pct": 0.0
+  },
+  "YingAdaptAge": {
+    "n_cpgs": 999,
+    "with_mqtl": 999,
+    "with_mqtl_pct": 100.0,
+    "strong_instrument": 999,
+    "strong_instrument_pct": 100.0,
+    "median_independent": 2.0,
+    "median_best_f": 792.9631316192272,
+    "selected_by_mr": true,
+    "unassessable": 0,
+    "unassessable_pct": 0.0
+  },
+  "_comparison": {
+    "mr_selected_mean_pct": 100.0,
+    "conventional_mean_pct": 61.59568206508164
+  }
+}

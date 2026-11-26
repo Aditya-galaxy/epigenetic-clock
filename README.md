@@ -80,6 +80,45 @@ not chronological-age predictors at all (r = 0.66), so a bias in years is not a 
 of them, and they are reported only because they were run. 190 of roughly 290,000 test beta values
 were missing and filled with the training mean. One cohort pair, one platform, one tissue.
 
+## Which of these CpGs can Mendelian randomisation speak to at all?
+
+Before asking whether a clock is built from causal sites, there is a prior question with a factual
+answer: do its CpGs have genetic instruments? `scripts/fetch_mqtls.py` pulls cis-mQTLs from
+[GoDMC](http://api.godmc.org.uk) (Min et al., Nature Genetics 2021) at p < 5e-8, which is public
+and needs no account, and `scripts/instrument_strength.py` summarises them.
+
+| Clock | CpGs | Instrumented | **Unassessable** | Median instruments | Median best F | Selection |
+|---|---:|---:|---:|---:|---:|---|
+| Horvath (2013) | 353 | 57.8% | **42.2%** | 1 | 285 | methylation only |
+| Hannum (2013) | 71 | 71.8% | **28.2%** | 1 | 306 | methylation only |
+| PhenoAge | 513 | 55.2% | **44.8%** | 1 | 357 | methylation only |
+| CausAge | 585 | 100.0% | 0.0% | 2 | 694 | MR-selected |
+| DamAge | 1089 | 100.0% | 0.0% | 2 | 823 | MR-selected |
+| AdaptAge | 999 | 100.0% | 0.0% | 2 | 793 | MR-selected |
+
+**The 100% is not a finding.** Epigenome-wide MR can only select CpGs that have instruments, so
+those three columns had to come out that way, and the run is a check that the pipeline does what
+it is meant to rather than evidence of anything. Had they come out lower, I would have
+misunderstood how those clocks were built.
+
+The informative column is the one next to it. **Between 28% and 45% of the CpGs in the
+conventional clocks have no genome-wide significant cis-mQTL**, so MR cannot say anything about
+them in either direction. That is absence of evidence, not evidence that a site is not causal, and
+it bounds what a comparison of causal enrichment between these clocks can mean: it can only be a
+comparison over the assessable part, which is all of one set and roughly 60% of the other.
+
+An F threshold is reported in the script output only to show it does nothing here. Instruments
+pulled at p < 5e-8 already have F near 30 or above, so a weak-instrument filter at F > 10 excludes
+nothing and should not be presented as though it had.
+
+Taken with the calibration result above, the picture is consistent: the MR-selected clock has
+strictly better instruments, roughly twice the median best F, and calibrated worse on the
+independent cohort. Causal selection bought one thing and not the other.
+
+**This is the exposure half of an MR, not an MR.** Nothing here estimates an effect of methylation
+on anything. That needs outcome GWAS summary statistics, and the obvious source, OpenGWAS, has
+required an access token since 1 May 2024.
+
 ## Data
 
 Public Illumina 450K methylation arrays from GEO, both whole blood:
