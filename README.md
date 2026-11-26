@@ -141,14 +141,37 @@ them. **With the APOE region removed, nothing passes FDR at all: 0 of 2,403.**
 
 CpGs in CausAge, DamAge and AdaptAge show roughly twice the rate of nominal association with
 lifespan expected under the null. CpGs unique to Horvath, Hannum and PhenoAge sit exactly at the
-null. That is consistent with Ying et al.'s enrichment claim, visible across a set but at no
-single site.
+null. Read on before taking that as support for anything.
 
-**The caveat that decides how to read this.** Ying et al. chose their CpGs by epigenome-wide MR
-against ageing-related outcomes. If lifespan or a close correlate was among those outcomes, then
-finding lifespan enrichment among their CpGs re-finds their selection criterion and is not
-independent evidence. I have not established which outcomes they used, so this is an open question
-and not a replication.
+**The enrichment above is circular, and I checked.** Ying et al. name their eight EWMR outcomes
+in their Results, and the first is a "GWAS of lifespan from 512,047 mothers and 500,193 fathers of
+European ancestry (Timmers et al.)". That is the same GWAS used here. Their primary trait,
+Aging-GIP1, is a genetic principal component of six traits that include father and mother
+lifespan.
+
+So this analysis asks whether CpGs selected for association with parental lifespan are associated
+with parental lifespan. They are, and that is not evidence of anything. **The table above
+confirms that their selection worked, not that their claim holds.**
+
+It is not an instrument-strength artifact, which was the other obvious explanation and is worth
+recording because it was ruled out rather than assumed. Their CpGs have much stronger instruments
+(median best F 834 against 372), and more power produces more nominal significance for any
+outcome. Stratifying by instrument strength leaves the gap intact in every quartile:
+
+| Best-instrument F | MR-selected | Conventional |
+|---|---:|---:|
+| 26 to 245 | 0.100 (n=451) | 0.032 (n=154) |
+| 245 to 731 | 0.086 (n=498) | 0.056 (n=107) |
+| 731 to 1,614 | 0.082 (n=547) | 0.052 (n=58) |
+| 1,614 to 12,486 | 0.097 (n=537) | 0.044 (n=68) |
+
+**What a non-circular test would need.** Their eight outcomes are lifespan, extreme longevity,
+healthspan, frailty index, self-rated health, Aging-GIP1, Aging-GIP1 adjusted for income and
+deprivation, and healthy ageing. Any test against those, or against a component of Aging-GIP1, is
+circular. They used no disease-specific outcome, so a single age-related disease is the nearest
+independent option, though their healthspan outcome is defined as age at first incidence of any
+major age-related disease, which overlaps even that. Finding a genuinely independent ageing
+outcome is harder than it looks, and that is itself worth knowing before anyone tries.
 
 **Other limits.** 64% of tested CpGs have exactly one usable instrument, so pleiotropy cannot be
 checked at those sites by MR-Egger or heterogeneity, and the six-of-2,417 result is what low power
