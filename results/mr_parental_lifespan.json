@@ -1,0 +1,50 @@
+{
+  "Horvathv1": {
+    "n_cpgs": 353,
+    "tested": 166,
+    "tested_pct": 47.02549575070822,
+    "significant": 0,
+    "significant_pct_of_tested": 0.0,
+    "selected_by_mr": false
+  },
+  "Hannum": {
+    "n_cpgs": 71,
+    "tested": 36,
+    "tested_pct": 50.70422535211268,
+    "significant": 0,
+    "significant_pct_of_tested": 0.0,
+    "selected_by_mr": false
+  },
+  "PhenoAge": {
+    "n_cpgs": 513,
+    "tested": 231,
+    "tested_pct": 45.02923976608187,
+    "significant": 0,
+    "significant_pct_of_tested": 0.0,
+    "selected_by_mr": false
+  },
+  "YingCausAge": {
+    "n_cpgs": 585,
+    "tested": 483,
+    "tested_pct": 82.56410256410257,
+    "significant": 1,
+    "significant_pct_of_tested": 0.2070393374741201,
+    "selected_by_mr": true
+  },
+  "YingDamAge": {
+    "n_cpgs": 1089,
+    "tested": 914,
+    "tested_pct": 83.93021120293848,
+    "significant": 4,
+    "significant_pct_of_tested": 0.437636761487965,
+    "selected_by_mr": true
+  },
+  "YingAdaptAge": {
+    "n_cpgs": 999,
+    "tested": 869,
+    "tested_pct": 86.98698698698699,
+    "significant": 2,
+    "significant_pct_of_tested": 0.23014959723820483,
+    "selected_by_mr": true
+  }
+}

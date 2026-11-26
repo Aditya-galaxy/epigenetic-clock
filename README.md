@@ -119,6 +119,45 @@ independent cohort. Causal selection bought one thing and not the other.
 on anything. That needs outcome GWAS summary statistics, and the obvious source, OpenGWAS, has
 required an access token since 1 May 2024.
 
+## The MR itself: methylation on parental lifespan
+
+Exposure is the GoDMC cis-mQTLs above. Outcome is Timmers et al. 2019, lifespan of both parents
+combined, from GWAS Catalog GCST006698, streamed and filtered rather than downloaded whole.
+Estimators are the Wald ratio for one instrument and inverse-variance weighting for more.
+
+**No individual CpG survives.** Six pass FDR across 2,417 tested, and two of those are
+instrumented from chr19 around 45 Mb, which is **APOE**: the strongest and most pleiotropic locus
+in human lifespan genetics, acting through Alzheimer's and cardiovascular disease. A cis-mQTL
+there tracks lifespan whether or not methylation at that CpG does anything, so those are
+horizontal pleiotropy, not causal evidence. The largest, at p = 5e-36 from a single SNP, is one of
+them. **With the APOE region removed, nothing passes FDR at all: 0 of 2,403.**
+
+**In aggregate there is a difference, and it survives removing APOE.**
+
+| Set | n | Nominal p < 0.05 | 95% CI | |
+|---|---:|---:|---|---|
+| MR-selected CpGs | 2,020 | **0.090** | [0.078, 0.103] | excludes 0.05 |
+| Conventional-only CpGs | 383 | 0.044 | [0.026, 0.070] | includes 0.05 |
+
+CpGs in CausAge, DamAge and AdaptAge show roughly twice the rate of nominal association with
+lifespan expected under the null. CpGs unique to Horvath, Hannum and PhenoAge sit exactly at the
+null. That is consistent with Ying et al.'s enrichment claim, visible across a set but at no
+single site.
+
+**The caveat that decides how to read this.** Ying et al. chose their CpGs by epigenome-wide MR
+against ageing-related outcomes. If lifespan or a close correlate was among those outcomes, then
+finding lifespan enrichment among their CpGs re-finds their selection criterion and is not
+independent evidence. I have not established which outcomes they used, so this is an open question
+and not a replication.
+
+**Other limits.** 64% of tested CpGs have exactly one usable instrument, so pleiotropy cannot be
+checked at those sites by MR-Egger or heterogeneity, and the six-of-2,417 result is what low power
+looks like. Standard errors use the first-order approximation, ignoring uncertainty in the
+exposure effect. Palindromic SNPs are dropped rather than resolved by frequency, which costs power
+and avoids silently flipping a sign. 3,870 of 4,641 instruments were present in the outcome GWAS,
+and harmonisation removed more, so the conventional clocks fall from 55-72% instrumented to
+45-51% tested.
+
 ## Data
 
 Public Illumina 450K methylation arrays from GEO, both whole blood:

@@ -1,0 +1,48 @@
+{
+  "per_cpg": {
+    "tested": 2417,
+    "significant": 6,
+    "apoe_cpgs": 14,
+    "significant_in_apoe": 2,
+    "significant_without_apoe": 0,
+    "tested_without_apoe": 2403
+  },
+  "enrichment": {
+    "MR-selected|all": {
+      "n": 2031,
+      "rate": 0.09108813392417528,
+      "ci": [
+        0.07892535648897153,
+        0.10444559229692282
+      ],
+      "excludes_null": true
+    },
+    "MR-selected|APOE excluded": {
+      "n": 2020,
+      "rate": 0.0900990099009901,
+      "ci": [
+        0.07796709160046417,
+        0.10343524474554477
+      ],
+      "excludes_null": true
+    },
+    "conventional-only|all": {
+      "n": 386,
+      "rate": 0.04404145077720207,
+      "ci": [
+        0.02586186103314314,
+        0.06957978079154364
+      ],
+      "excludes_null": false
+    },
+    "conventional-only|APOE excluded": {
+      "n": 383,
+      "rate": 0.044386422976501305,
+      "ci": [
+        0.026066089628997056,
+        0.07011739959804318
+      ],
+      "excludes_null": false
+    }
+  }
+}
